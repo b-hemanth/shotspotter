@@ -35,16 +35,17 @@ data <- read_csv("wash_data.csv",
 data_16 <- data %>%
   filter(year == 2016)
 
-shape_data <- st_as_sf(data_16, coords = c("longitude", "latitude"),  crs=4326)
+shape_wash_data <- st_as_sf(data_16, coords = c("longitude", "latitude"),  crs=4326)
 
+shapes_data <- read_sf("Washington_DC_Boundary.shp")
 
 ggplot(data = shapes_data) +
   geom_sf() +
-  geom_sf(data = arrest_locations) +
+  geom_sf(data = shape_wash_data) +
   theme_map() + 
-  labs(title = "Location of Hartford Arrests",
-       subtitle = "Asian-Americans 2013 -- 2016", 
-       caption = "Source: Stanford Open Policing Project" )
+  labs(title = "Location of DC Gunshots",
+       subtitle = "In the year 2016", 
+       caption = "Source: Shotspotter Data")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
