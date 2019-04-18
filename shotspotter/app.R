@@ -1,11 +1,23 @@
 library(shiny)
 library(fs)
 library(tidyverse)
+library(mapview)
+library(leaflet)
+library(tidycensus)
+library(sf)
+library(tmap)
+library(tmaptools)
+library(tigris)
+library(ggplot2)
+library(viridis)
+
 
 # We downlaoded the data and saved it in the github repo. By the nature of the
 # dataset, we don't expect it to change anythime soon.
 
 data <- read_csv("st_louis_data.csv")
+
+mapview(data, xcol = "Longitude", ycol = "Latitude", crs = 4269, grid = FALSE)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
