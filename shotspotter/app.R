@@ -14,6 +14,9 @@ library(ggthemes)
 library(gganimate)
 library(shinycssloaders)
 library(shinythemes)
+
+# 1: PREPROCESSING
+
 # We downloaded the data and saved it in the github repo. By the nature of the
 # dataset, we don't expect it to change anythime soon.
 
@@ -42,9 +45,9 @@ DC <- st_as_sf(DC)
 shape_wash_data <- st_as_sf(data, coords = c("longitude", "latitude"),  crs=4326)
 
 
+# 2: USER INTERFACE
 
 # Define UI 
-
 # Based on:
 # https://community.rstudio.com/t/different-inputs-sidebars-for-each-tab/1937/2
 # We need different sidebar panels for different tabs, so, the traditional one
@@ -79,51 +82,19 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                                     radioButtons("year",
                                                  "Year: ", unique(data$year))
                                   ),
-                                  mailPanel(
+                                  mainPanel(
                                     tabPanel("In a Day",
-                                                     plotOutput("hoursPlot"))
+                                             withSpinner(plotOutput("hoursPlot"), type = 4))
                                     )
                          )
 ))
 
-# fluidPage(
-#    
-#    # Application title
-#    titlePanel("Gun Shots in Washington DC"),
-#    
-#    # Sidebar with a slider input for number of bins 
-#    sidebarLayout(
-#       sidebarPanel(
-#          sliderInput("year",
-#                      "Year:",
-#                      min = 2006,
-#                      max = 2017,
-#                      value = 2006,
-#                      sep = "")
-#       ),
-#       sidebarPanel(
-#         radioButtons("year",
-#                      "Year: ", unique(data$year))
-#       ),
-#       
-#       # Show a plot of the generated distribution
-#       mainPanel(
-#         tabsetPanel(
-#           tabPanel("Across the Years", 
-#                    withSpinner(plotOutput("mapplot"), type = 4),
-#           tabPanel("In a day",
-#                    plotOutput("hoursPlot"))
-#         )
-#       )
-#    )
-# )
-# )
+# 3: FUNCTIONS FOR ANIMATIONS
 
-# Define server logic required to draw a histogram
+# Define server logic 
 server <- function(input, output) {
    
    output$mapplot <- renderPlot({
-      # generate bins based on input$bins from ui.R
       shape_wash_data <- st_as_sf(data %>% filter(year == input$year, numshots > 1), coords = c("longitude", "latitude"),  crs=4326)
       
       ggplot(data = DC) +
@@ -138,9 +109,10 @@ server <- function(input, output) {
    
    output$hoursPlot <- renderPlot({
      region_subset <- st_as_sf(data %>% filter(year == input$year, !is.na(numshots)), coords = c("longitude", "latitude"),  crs=4326)
+     sample <- region_subset[sample(nrow(region_subset), 10), ]
      ggplot(data = DC) +
        geom_sf() +
-       geom_sf(data = region_subset) +
+       geom_sf(data = sample) +
        theme_map() +
        transition_states(hour) + 
        labs(
