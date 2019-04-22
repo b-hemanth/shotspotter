@@ -41,14 +41,7 @@ DC <- DC[DC$NAME == "District of Columbia", ]
 DC <- st_as_sf(DC)
 shape_wash_data <- st_as_sf(data, coords = c("longitude", "latitude"),  crs=4326)
 
-ggplot(data = DC) +
-  geom_sf() +
-  geom_sf(data = shape_wash_data) +
-  theme_map() + 
-  transition_states(year) + 
-  labs(title = "Location of DC Shootings by Year",
-       subtitle = "Year: {closest_state}",
-       caption = "Source: Shotspotter Data")
+
 
 # Define UI 
 
@@ -134,31 +127,28 @@ server <- function(input, output) {
       shape_wash_data <- st_as_sf(data %>% filter(year == input$year, numshots > 1), coords = c("longitude", "latitude"),  crs=4326)
       
       ggplot(data = DC) +
-         geom_sf() +
-         geom_sf(data = shape_wash_data) +
-         theme_map()
+        geom_sf() +
+        geom_sf(data = shape_wash_data) +
+        theme_map() + 
+        transition_states(year) + 
+        labs(title = "Location of DC Shootings by Year",
+             subtitle = "Year: {closest_state}",
+             caption = "Source: Shotspotter Data")
    })
    
    output$hoursPlot <- renderPlot({
-     shape_wash_data <- st_as_sf(data %>% filter(year == input$year, numshots > 1), coords = c("longitude", "latitude"),  crs=4326)
-     region_subset <- data %>% filter(!is.na(text), text == input$text)
-     ggplot(region_subset, aes(x = created_at, y = favourites_count)) +
-       geom_col() +
-       geom_point() +
-       theme_wsj() + 
-       scale_color_wsj() +
+     region_subset <- st_as_sf(data %>% filter(year == input$year, !is.na(numshots)), coords = c("longitude", "latitude"),  crs=4326)
+     ggplot(data = DC) +
+       geom_sf() +
+       geom_sf(data = region_subset) +
+       theme_map() +
+       transition_states(hour) + 
        labs(
-         title = "When the IT Cells Strike Twitter* —
-         Favourites Count for Selected Time",
-         subtitle = "The Indian elections see bot tweeting as a tool to 
-         make messages popular: when in the 
-         day were these bots deadliest?",
-         source = "Data scraped from Twitter; 
-         *represents a particular sample, 
-         details @https://github.com/b-hemanth/lok_sabha_campaigns",
-         x = "Hour of the Day",
-         y = "Favourites"
-       )
+         title = "Location of DC Shootings During the Day",
+         subtitle = "Hour: {closest_state}",
+         caption = "Source: Shotspotter Data"
+         )
+     
    })
 }
 
