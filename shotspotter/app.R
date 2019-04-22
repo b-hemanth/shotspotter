@@ -1,9 +1,9 @@
 library(shiny)
 library(fs)
 library(tidyverse)
-library(mapview)
 library(leaflet)
 library(tidycensus)
+library(mapview)
 library(sf)
 library(tmap)
 library(tmaptools)
@@ -16,7 +16,7 @@ library(shinycssloaders)
 # We downloaded the data and saved it in the github repo. By the nature of the
 # dataset, we don't expect it to change anythime soon.
 
-data <- read_csv("wash_data.csv",
+data <- read_csv("shotspotter/wash_data.csv",
                  cols(
                    incidentid = col_double(),
                    latitude = col_double(),
@@ -38,8 +38,6 @@ DC <-  states(cb = TRUE)
 DC <- DC[DC$NAME == "District of Columbia", ]
 
 DC <- st_as_sf(DC)
-
-shape_wash_data <- st_as_sf(data %>% filter(year == 2016, numshots > 1), coords = c("longitude", "latitude"),  crs=4326)
 
 ggplot(data = DC) +
   geom_sf() +
