@@ -1,37 +1,22 @@
 library(shiny)
 library(fs)
 library(tidyverse)
-library(mapview)
 library(leaflet)
 library(tidycensus)
+library(mapview)
 library(sf)
 library(tmap)
 library(tmaptools)
 library(tigris)
 library(ggplot2)
 library(viridis)
-
-a = c("shiny",
-          "fs",
-          "tidyverse",
-          "mapview",
-          "leaflet",
-          "tidycensus",
-          "sf",
-          "tmap",
-          "tmaptools",
-          "tigris",
-          "ggplot2",
-          "viridis")
-
-for (i in a){
-   install.packages(i)
-}
-
+library(ggthemes)
+library(gganimate)
+library(shinycssloaders)
 # We downloaded the data and saved it in the github repo. By the nature of the
 # dataset, we don't expect it to change anythime soon.
 
-data <- read_csv("wash_data.csv",
+data <- read_csv("shotspotter/wash_data.csv",
                  cols(
                    incidentid = col_double(),
                    latitude = col_double(),
@@ -48,19 +33,24 @@ data <- read_csv("wash_data.csv",
                  col_names = TRUE
                  )
 
-data_16 <- data %>%
-  filter(year == 2016)
+DC <-  states(cb = TRUE)
 
-shape_wash_data <- st_as_sf(data_16, coords = c("longitude", "latitude"),  crs=4326)
+DC <- DC[DC$NAME == "District of Columbia", ]
 
+<<<<<<< HEAD
 shapes_data <- read_sf("shotspotter/Washington_DC_Boundary.shp")
+=======
+DC <- st_as_sf(DC)
+shape_wash_data <- st_as_sf(data, coords = c("longitude", "latitude"),  crs=4326)
+>>>>>>> de3c120f06d4ee869a5e8a0d41c0bbf4385988c5
 
-ggplot(data = shapes_data) +
+ggplot(data = DC) +
   geom_sf() +
   geom_sf(data = shape_wash_data) +
   theme_map() + 
-  labs(title = "Location of DC Gunshots",
-       subtitle = "In the year 2016", 
+  transition_states(year) + 
+  labs(title = "Location of DC Shootings by Year",
+       subtitle = "Year: {closest_state}",
        caption = "Source: Shotspotter Data")
 
 # Define UI for application that draws a histogram
@@ -72,16 +62,17 @@ ui <- fluidPage(
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
       sidebarPanel(
-         sliderInput("bins",
-                     "Number of bins:",
-                     min = 1,
-                     max = 50,
-                     value = 30)
+         sliderInput("year",
+                     "Year:",
+                     min = 2006,
+                     max = 2017,
+                     value = 2006,
+                     sep = "")
       ),
       
       # Show a plot of the generated distribution
       mainPanel(
-         plotOutput("distPlot")
+         withSpinner(plotOutput("mapplot"), type = 4)
       )
    )
 )
@@ -89,13 +80,14 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
    
-   output$distPlot <- renderPlot({
+   output$mapplot <- renderPlot({
       # generate bins based on input$bins from ui.R
-      x    <- faithful[, 2] 
-      bins <- seq(min(x), max(x), length.out = input$bins + 1)
+      shape_wash_data <- st_as_sf(data %>% filter(year == input$year, numshots > 1), coords = c("longitude", "latitude"),  crs=4326)
       
-      # draw the histogram with the specified number of bins
-      hist(x, breaks = bins, col = 'darkgray', border = 'white')
+      ggplot(data = DC) +
+         geom_sf() +
+         geom_sf(data = shape_wash_data) +
+         theme_map()
    })
 }
 
