@@ -88,7 +88,7 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                                     radioButtons("year",
                                                  "Year: ", unique(data$year))
                                   ),
-                                  mailPanel(
+                                  mainPanel(
                                     tabPanel("In a Day",
                                                      plotOutput("hoursPlot"))
                                     )
