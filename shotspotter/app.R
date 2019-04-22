@@ -1,9 +1,9 @@
 library(shiny)
 library(fs)
 library(tidyverse)
-library(mapview)
 library(leaflet)
 library(tidycensus)
+library(mapview)
 library(sf)
 library(tmap)
 library(tmaptools)
@@ -16,7 +16,7 @@ library(ggthemes)
 # We downloaded the data and saved it in the github repo. By the nature of the
 # dataset, we don't expect it to change anythime soon.
 
-data <- read_csv("wash_data.csv",
+data <- read_csv("shotspotter/wash_data.csv",
                  cols(
                    incidentid = col_double(),
                    latitude = col_double(),
@@ -38,7 +38,7 @@ data_16 <- data %>%
 
 shape_wash_data <- st_as_sf(data_16, coords = c("longitude", "latitude"),  crs=4326)
 
-shapes_data <- read_sf("Washington_DC_Boundary.shp")
+shapes_data <- st_read("shotspotter/Washington_DC_Boundary.shp")
 
 ggplot(data = shapes_data) +
   geom_sf() +
