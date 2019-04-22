@@ -53,7 +53,7 @@ data_16 <- data %>%
 
 shape_wash_data <- st_as_sf(data_16, coords = c("longitude", "latitude"),  crs=4326)
 
-shapes_data <- read_sf("Washington_DC_Boundary.shp")
+shapes_data <- read_sf("shotspotter/Washington_DC_Boundary.shp")
 
 ggplot(data = shapes_data) +
   geom_sf() +
