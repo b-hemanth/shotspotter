@@ -18,7 +18,7 @@ library(viridis)
 
 data <- read_csv("wash_data.csv")
 
-mapview(data, xcol = "Longitude", ycol = "Latitude", crs = 4269, grid = FALSE)
+mapview(data, xcol = "longitude", ycol = "latitude", crs = 4269, grid = FALSE)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
