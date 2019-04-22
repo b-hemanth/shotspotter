@@ -38,13 +38,15 @@ DC <-  states(cb = TRUE)
 DC <- DC[DC$NAME == "District of Columbia", ]
 
 DC <- st_as_sf(DC)
+shape_wash_data <- st_as_sf(data, coords = c("longitude", "latitude"),  crs=4326)
 
 ggplot(data = DC) +
   geom_sf() +
   geom_sf(data = shape_wash_data) +
   theme_map() + 
-  transition_states(month) + 
-  labs(title = "Location of DC Shootings by Month",
+  transition_states(year) + 
+  labs(title = "Location of DC Shootings by Year",
+       subtitle = "Year: {closest_state}",
        caption = "Source: Shotspotter Data")
 
 # Define UI for application that draws a histogram
