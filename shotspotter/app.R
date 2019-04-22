@@ -15,7 +15,8 @@ library(viridis)
 # We downlaoded the data and saved it in the github repo. By the nature of the
 # dataset, we don't expect it to change anythime soon.
 
-data <- read_csv("st_louis_data.csv")
+
+data <- read_csv("wash_data.csv")
 
 mapview(data, xcol = "Longitude", ycol = "Latitude", crs = 4269, grid = FALSE)
 
