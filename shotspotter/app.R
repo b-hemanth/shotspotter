@@ -7,12 +7,27 @@ library(mapview)
 library(sf)
 library(tmap)
 library(tmaptools)
+
+# After not finding valid shapefiles in the right format for DC, we chose to use
+# the `tigris` package's inbuilt states() function for the US that allowed us to
+# access shapefiles for American states. Filtering for DC, we found the
+# shapefile we wanted.
+
 library(tigris)
+
 library(ggplot2)
 library(viridis)
 library(ggthemes)
 library(gganimate)
+
+# This package allows our tabpanels to call for output enclosed by the
+# withSpinner() function. Eg: withSpinner(plotOutput("mapplot"), type = 4). This
+# function gives a loading symbol when the Shiny App is rendered, ensuring that
+# the otherwise present whitespace when heavy renders like this one with
+# animations isn't mistaken for an error or Shiny failure.
+
 library(shinycssloaders)
+
 library(shinythemes)
 
 # 1: PREPROCESSING
@@ -37,8 +52,12 @@ data <- read_csv("wash_data.csv",
                  col_names = TRUE
                  )
 
-DC <-  states(cb = TRUE)
+# After not finding valid shapefiles in the right format for DC, we chose to use
+# the `tigris` package's inbuilt states() function for the US that allowed us to
+# access shapefiles for American states. Filtering for DC, we found the
+# shapefile we wanted.
 
+DC <-  states(cb = TRUE)
 DC <- DC[DC$NAME == "District of Columbia", ]
 
 DC <- st_as_sf(DC)
