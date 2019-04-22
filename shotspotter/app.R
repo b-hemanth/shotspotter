@@ -13,6 +13,7 @@ library(viridis)
 library(ggthemes)
 library(gganimate)
 library(shinycssloaders)
+library(shinythemes)
 # We downloaded the data and saved it in the github repo. By the nature of the
 # dataset, we don't expect it to change anythime soon.
 
@@ -49,35 +50,81 @@ ggplot(data = DC) +
        subtitle = "Year: {closest_state}",
        caption = "Source: Shotspotter Data")
 
-# Define UI for application that draws a histogram
-ui <- fluidPage(
-   
-   # Application title
-   titlePanel("Gun Shots in Washington DC"),
-   
-   # Sidebar with a slider input for number of bins 
-   sidebarLayout(
-      sidebarPanel(
-         sliderInput("year",
-                     "Year:",
-                     min = 2006,
-                     max = 2017,
-                     value = 2006,
-                     sep = "")
-      ),
-      
-      # Show a plot of the generated distribution
-      mainPanel(
-        tabsetPanel(
-          tabPanel("Across the Years", 
-                   withSpinner(plotOutput("mapplot"), type = 4),
-          tabPanel("In a day",
-                   plotOutput("hoursPlot"))
-        )
-      )
-   )
-)
-)
+# Define UI 
+
+# Based on:
+# https://community.rstudio.com/t/different-inputs-sidebars-for-each-tab/1937/2
+# We need different sidebar panels for different tabs, so, the traditional one
+# panel, multiple tabs method doeesn't work. Instead, we resolve this UI problem
+# by making a multi-page Shiny App. Here, the app is built with separate
+# sidebars on each page using the navbarPage() layout (the pages are created
+# with the tabPanel() function). 
+
+# An example of this:
+# https://github.com/Jim89/oyster/blob/master/R/shiny/ui.R 
+# A working app example: https://jleach.shinyapps.io/oyster/
+
+ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
+                         tabPanel("Across the Years",
+                                  sidebarPanel(
+                                    sliderInput("year",
+                                                "Year:",
+                                                min = 2006,
+                                                max = 2017,
+                                                value = 2006,
+                                                sep = "")
+                                  ),
+                                  mainPanel(
+                                    tabsetPanel(
+                                      tabPanel("Across the Years", 
+                                               withSpinner(plotOutput("mapplot"), type = 4)
+                                               ))
+                                  )
+                         ),
+                         tabPanel("In a Day",
+                                  sidebarPanel(
+                                    radioButtons("year",
+                                                 "Year: ", unique(data$year))
+                                  ),
+                                  mailPanel(
+                                    tabPanel("In a Day",
+                                                     plotOutput("hoursPlot"))
+                                    )
+                         )
+))
+
+# fluidPage(
+#    
+#    # Application title
+#    titlePanel("Gun Shots in Washington DC"),
+#    
+#    # Sidebar with a slider input for number of bins 
+#    sidebarLayout(
+#       sidebarPanel(
+#          sliderInput("year",
+#                      "Year:",
+#                      min = 2006,
+#                      max = 2017,
+#                      value = 2006,
+#                      sep = "")
+#       ),
+#       sidebarPanel(
+#         radioButtons("year",
+#                      "Year: ", unique(data$year))
+#       ),
+#       
+#       # Show a plot of the generated distribution
+#       mainPanel(
+#         tabsetPanel(
+#           tabPanel("Across the Years", 
+#                    withSpinner(plotOutput("mapplot"), type = 4),
+#           tabPanel("In a day",
+#                    plotOutput("hoursPlot"))
+#         )
+#       )
+#    )
+# )
+# )
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
@@ -90,6 +137,28 @@ server <- function(input, output) {
          geom_sf() +
          geom_sf(data = shape_wash_data) +
          theme_map()
+   })
+   
+   output$hoursPlot <- renderPlot({
+     shape_wash_data <- st_as_sf(data %>% filter(year == input$year, numshots > 1), coords = c("longitude", "latitude"),  crs=4326)
+     region_subset <- data %>% filter(!is.na(text), text == input$text)
+     ggplot(region_subset, aes(x = created_at, y = favourites_count)) +
+       geom_col() +
+       geom_point() +
+       theme_wsj() + 
+       scale_color_wsj() +
+       labs(
+         title = "When the IT Cells Strike Twitter* —
+         Favourites Count for Selected Time",
+         subtitle = "The Indian elections see bot tweeting as a tool to 
+         make messages popular: when in the 
+         day were these bots deadliest?",
+         source = "Data scraped from Twitter; 
+         *represents a particular sample, 
+         details @https://github.com/b-hemanth/lok_sabha_campaigns",
+         x = "Hour of the Day",
+         y = "Favourites"
+       )
    })
 }
 
