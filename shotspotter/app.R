@@ -11,23 +11,6 @@ library(tigris)
 library(ggplot2)
 library(viridis)
 
-a = c("shiny",
-          "fs",
-          "tidyverse",
-          "mapview",
-          "leaflet",
-          "tidycensus",
-          "sf",
-          "tmap",
-          "tmaptools",
-          "tigris",
-          "ggplot2",
-          "viridis")
-
-for (i in a){
-   install.packages(i)
-}
-
 # We downloaded the data and saved it in the github repo. By the nature of the
 # dataset, we don't expect it to change anythime soon.
 
