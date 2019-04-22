@@ -10,6 +10,7 @@ library(tmaptools)
 library(tigris)
 library(ggplot2)
 library(viridis)
+library(ggthemes)
 
 # We downloaded the data and saved it in the github repo. By the nature of the
 # dataset, we don't expect it to change anythime soon.
