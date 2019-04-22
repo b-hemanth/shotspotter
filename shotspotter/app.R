@@ -16,7 +16,7 @@ library(shinycssloaders)
 # We downloaded the data and saved it in the github repo. By the nature of the
 # dataset, we don't expect it to change anythime soon.
 
-data <- read_csv("shotspotter/wash_data.csv",
+data <- read_csv("wash_data.csv",
                  cols(
                    incidentid = col_double(),
                    latitude = col_double(),
@@ -37,12 +37,8 @@ DC <-  states(cb = TRUE)
 
 DC <- DC[DC$NAME == "District of Columbia", ]
 
-<<<<<<< HEAD
-shapes_data <- read_sf("shotspotter/Washington_DC_Boundary.shp")
-=======
 DC <- st_as_sf(DC)
 shape_wash_data <- st_as_sf(data, coords = c("longitude", "latitude"),  crs=4326)
->>>>>>> de3c120f06d4ee869a5e8a0d41c0bbf4385988c5
 
 ggplot(data = DC) +
   geom_sf() +
@@ -57,7 +53,7 @@ ggplot(data = DC) +
 ui <- fluidPage(
    
    # Application title
-   titlePanel("Old Faithful Geyser Data"),
+   titlePanel("Gun Shots in Washington DC"),
    
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
@@ -72,9 +68,15 @@ ui <- fluidPage(
       
       # Show a plot of the generated distribution
       mainPanel(
-         withSpinner(plotOutput("mapplot"), type = 4)
+        tabsetPanel(
+          tabPanel("Across the Years", 
+                   withSpinner(plotOutput("mapplot"), type = 4),
+          tabPanel("In a day",
+                   plotOutput("hoursPlot"))
+        )
       )
    )
+)
 )
 
 # Define server logic required to draw a histogram
