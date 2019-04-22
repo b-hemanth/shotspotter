@@ -52,6 +52,12 @@ data <- read_csv("wash_data.csv",
                  col_names = TRUE
                  )
 
+# Adding a date column 
+# For plot #2, we allow the user to pick any date in the
+# window in which the data exists and view all the gunshots in that day by hour.
+
+data$date <- as.Date(paste(data$year, data$month, data$day, sep="-"), "%Y-%m-%d")
+
 # After not finding valid shapefiles in the right format for DC, we chose to use
 # the `tigris` package's inbuilt states() function for the US that allowed us to
 # access shapefiles for American states. Filtering for DC, we found the
@@ -98,12 +104,15 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                          ),
                          tabPanel("In a Day",
                                   sidebarPanel(
-                                    radioButtons("year",
-                                                 "Year: ", unique(data$year))
+                                    dateInput("date",
+                                              "Date (yyyy-mm-dd from 2006-2017): ", 
+                                              min = "2006-01-27", 
+                                              max = "2017-01-01",
+                                              format = "yyyy-mm-dd")
                                   ),
                                   mainPanel(
                                     tabPanel("In a Day",
-                                             withSpinner(plotOutput("hoursPlot"), type = 4))
+                                             withSpinner(imageOutput("hoursPlot"), type = 4))
                                     )
                          )
 ))
@@ -126,21 +135,31 @@ server <- function(input, output) {
              caption = "Source: Shotspotter Data")
    })
    
-   output$hoursPlot <- renderPlot({
-     region_subset <- st_as_sf(data %>% filter(year == input$year, !is.na(numshots)), coords = c("longitude", "latitude"),  crs=4326)
-     sample <- region_subset[sample(nrow(region_subset), 10), ]
-     ggplot(data = DC) +
+   output$hoursPlot <- renderImage({
+     outfile <- tempfile(fileext='.gif')
+     region_subset <- st_as_sf(data %>% filter(data == input$date, !is.na(numshots)), coords = c("longitude", "latitude"),  crs=4326)
+     sample <- region_subset[sample(nrow(region_subset), 50), ]
+     p = ggplot(data = DC) +
        geom_sf() +
        geom_sf(data = sample) +
        theme_map() +
        transition_states(hour) + 
        labs(
-         title = "Location of DC Shootings During the Day",
-         subtitle = "Hour: {closest_state}",
+         title = "Location of DC Shootings Through the Day",
+         subtitle = "Shots at {closest_state}00 HRS",
          caption = "Source: Shotspotter Data"
          )
      
-   })
+     anim_save("outfile.gif", animate(p))
+     
+     # Return a list containing the filename
+     list(src = "outfile.gif",
+          contentType = 'image/gif'
+          # width = 400,
+          # height = 300,
+          # alt = "This is alternate text"
+     )
+})
 }
 
 # Run the application 
