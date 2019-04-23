@@ -19,6 +19,7 @@ library(ggplot2)
 library(viridis)
 library(ggthemes)
 library(gganimate)
+library(gifski)
 
 # This package allows our tabpanels to call for output enclosed by the
 # withSpinner() function. Eg: withSpinner(plotOutput("mapplot"), type = 4). This
@@ -27,7 +28,7 @@ library(gganimate)
 # animations isn't mistaken for an error or Shiny failure.
 
 library(shinycssloaders)
-
+library(transformr)
 library(shinythemes)
 library(lubridate)
 library(shinythemes)
