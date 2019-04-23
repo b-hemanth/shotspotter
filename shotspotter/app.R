@@ -52,7 +52,9 @@ data <- read_csv("wash_data.csv",
                    type = col_logical()
                  ),
                  col_names = TRUE
-                 ) %>%
+                 ) 
+data_2 <- data
+data <- data %>%
   mutate(month_1 = as.character(month(ymd(010101) + months(month-1),
                                     label = TRUE,
                                     abbr = FALSE)))
@@ -61,20 +63,17 @@ data <- read_csv("wash_data.csv",
 # For plot #2, we allow the user to pick any date in the
 # window in which the data exists and view all the gunshots in that day by hour.
 
-data$date <- as.Date(paste(data$year, data$month, data$day, sep="-"), "%Y-%m-%d")
+data_2$date <- as.Date(paste(data_2$year, data_2$month, data_2$day, sep="-"), "%Y-%m-%d")
 
 # After not finding valid shapefiles in the right format for DC, we chose to use
 # the `tigris` package's inbuilt states() function for the US that allowed us to
 # access shapefiles for American states. Filtering for DC, we found the
 # shapefile we wanted.
 
-DC <- DC[DC$NAME == "District of Columbia", ]
-
 DC <-  states(cb = TRUE)
 DC <- DC[DC$NAME == "District of Columbia", ]
 
 DC <- st_as_sf(DC)
-shape_wash_data <- st_as_sf(data, coords = c("longitude", "latitude"),  crs=4326)
 
 
 # 2: USER INTERFACE
@@ -205,13 +204,13 @@ server <- function(input, output) {
    
    output$hoursPlot <- renderImage({
      
-     region_subset <- st_as_sf(data %>% filter(date == input$date), coords = c("longitude", "latitude"),  crs=4326)
+     region_subset <- st_as_sf(data_2 %>% filter(date == input$date), coords = c("longitude", "latitude"),  crs=4326)
      
      outfile <- tempfile(fileext='.gif')
      
      p = ggplot(data = DC) +
        geom_sf() +
-       geom_sf(data = sample) +
+       geom_sf(data = region_subset) +
        
        # HEALEY Recommends black and white themes on maps. A simple black and
        # white theme is also the most practical theme: with an  interactive AND
@@ -229,12 +228,10 @@ server <- function(input, output) {
      anim_save("outfile.gif", animate(p))
      
      # Return a list containing the filename
-     list(src = "outfile.gif",
-          contentType = 'image/gif'
-          # width = 400,
-          # height = 300,
-          # alt = "This is alternate text"
-     )
+     list(
+       src = "outfile.gif",
+       contentType = 'image/gif'
+       )
 })
 }
 
