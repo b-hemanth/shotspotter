@@ -2,6 +2,9 @@
 ## Authors: Hemanth Bharatha Chakravarthy and Ilkin Bayramli
 _This project aims to investigate the gunshot data provided by the Justice Tech Lab on Washington DC._ 
 
+## The App
+https://hemanth-bharatha-chakravarthy.shinyapps.io/gunshots_wash_dc/
+
 ## Note on the Data
 The Justice Tech Lab's ShotSpotter uses acoustic sensors to detect gunfire sounds and record time as well as location of all gunfire incidents in a covered area.
 
