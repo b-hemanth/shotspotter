@@ -14,6 +14,9 @@ library(ggthemes)
 library(gganimate)
 library(shinycssloaders)
 library(shinythemes)
+library(lubridate)
+library(shinythemes)
+
 # We downloaded the data and saved it in the github repo. By the nature of the
 # dataset, we don't expect it to change anythime soon.
 
@@ -32,7 +35,10 @@ data <- read_csv("wash_data.csv",
                    type = col_logical()
                  ),
                  col_names = TRUE
-                 )
+                 ) %>%
+  mutate(month = as.character(month(ymd(010101) + months(month-1),
+                                    label = TRUE,
+                                    abbr = FALSE)))
 
 DC <-  states(cb = TRUE)
 
@@ -40,46 +46,37 @@ DC <-  states(cb = TRUE)
 DC <- DC[DC$NAME == "District of Columbia", ]
 
 DC <- st_as_sf(DC)
-shape_wash_data <- st_as_sf(data, coords = c("longitude", "latitude"),  crs=4326)
-
+shape_wash_data <- st_as_sf(data %>% filter(year == 2016) %>% sample_n(10), coords = c("longitude", "latitude"),  crs=4326)
 
 ggplot(data = DC) +
   geom_sf() +
   geom_sf(data = shape_wash_data) +
-  theme_map() + 
-  transition_states(year) + 
+  theme_map() +
   labs(title = "Location of DC Shootings by Year",
-       subtitle = "Year: {closest_state}",
        caption = "Source: Shotspotter Data")
 
-# Define UI 
 
-# Based on:
-# https://community.rstudio.com/t/different-inputs-sidebars-for-each-tab/1937/2
-# We need different sidebar panels for different tabs, so, the traditional one
-# panel, multiple tabs method doeesn't work. Instead, we resolve this UI problem
-# by making a multi-page Shiny App. Here, the app is built with separate
-# sidebars on each page using the navbarPage() layout (the pages are created
-# with the tabPanel() function). 
-
-# An example of this:
-# https://github.com/Jim89/oyster/blob/master/R/shiny/ui.R 
-# A working app example: https://jleach.shinyapps.io/oyster/
-
-ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
+ui <- shinyUI(navbarPage("Washington DC Gun Shot Location Data",
+                         theme = shinytheme("darkly"),
                          tabPanel("Across the Years",
                                   sidebarPanel(
-                                    sliderInput("year",
-                                                "Year:",
-                                                min = 2006,
-                                                max = 2017,
-                                                value = 2006,
-                                                sep = "")
+                                    selectInput("year_1",
+                                                "Select the year to iterate over:",
+                                                c("2016" = 2016,
+                                                  "2015" = 2015,
+                                                  "2014" = 2014,
+                                                  "2013" = 2013,
+                                                  "2012" = 2012,
+                                                  "2011" = 2011,
+                                                  "2010" = 2010,
+                                                  "2009" = 2009,
+                                                  "2008" = 2008,
+                                                  "2007" = 2007))
                                   ),
                                   mainPanel(
                                     tabsetPanel(
-                                      tabPanel("Across the Years", 
-                                               withSpinner(plotOutput("mapplot"), type = 4)
+                                      tabPanel("Gun Shot Locations of a Random Sample by Month", 
+                                               withSpinner(imageOutput("mapplot"), type = 4)
                                                ))
                                   )
                          ),
@@ -95,72 +92,75 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                          )
 ))
 
-# fluidPage(
-#    
-#    # Application title
-#    titlePanel("Gun Shots in Washington DC"),
-#    
-#    # Sidebar with a slider input for number of bins 
-#    sidebarLayout(
-#       sidebarPanel(
-#          sliderInput("year",
-#                      "Year:",
-#                      min = 2006,
-#                      max = 2017,
-#                      value = 2006,
-#                      sep = "")
-#       ),
-#       sidebarPanel(
-#         radioButtons("year",
-#                      "Year: ", unique(data$year))
-#       ),
-#       
-#       # Show a plot of the generated distribution
-#       mainPanel(
-#         tabsetPanel(
-#           tabPanel("Across the Years", 
-#                    withSpinner(plotOutput("mapplot"), type = 4),
-#           tabPanel("In a day",
-#                    plotOutput("hoursPlot"))
-#         )
-#       )
-#    )
-# )
-# )
 
 # Define server logic required to draw a histogram
+
 server <- function(input, output) {
-   
-   output$mapplot <- renderPlot({
-      # generate bins based on input$bins from ui.R
-      shape_wash_data <- st_as_sf(data %>% filter(year == input$year, numshots > 1), coords = c("longitude", "latitude"),  crs=4326)
+  
+  
+   # Because we are in fact plotting .gif files, renderPlot won't work. We
+   # actually need to treat the output as an image.
+     
+   output$mapplot <- renderImage({
+     
+     # This filter the data according to the input of our user NOTE: I decided to
+     # draw a sample of 50 because it took ages for the gganimate to load. Given
+     # that we are REQUIRED by the prompt to make an interactive gganimate plot,
+     # this was the only solution I could come up with. Another thing is, the
+     # graphs still take a lot of time to load. This is just the way gganimate()
+     # works.
+     
+      shape_wash_data <- st_as_sf(data %>% filter(year == input$year_1) %>% sample_n(50), 
+                                  coords = c("longitude", "latitude"), 
+                                  crs = 4326)
       
-      ggplot(data = DC) +
-         geom_sf() +
-         geom_sf(data = shape_wash_data) +
-         theme_map()
+      # This is the way renderImage works
+      
+      outfile <- tempfile(fileext = '.gif')
+      
+      # This actually plots the map we need
+      
+      p <- ggplot(data = DC, aes()) +
+        geom_sf() +
+        geom_sf(data = shape_wash_data) +
+        
+        # We iterate over the data montly to see how the crime locations change
+        # every month within a certain year
+        
+        transition_states(month) +
+        
+        # Healy recommends using BW theme
+        
+        theme_bw() +
+        
+        # This is to make the user aware of the which month the data represents
+        
+        labs(title = "Month: {closest_state}")
+      
+      # This saves the file for embedding
+      
+      anim_save("outfile.gif", animate(p))
+      
+      # I also had to do this due to the syntax
+      
+      list(src = "outfile.gif",
+           contentType = 'image/gif'
+      )
    })
    
    output$hoursPlot <- renderPlot({
-     shape_wash_data <- st_as_sf(data %>% filter(year == input$year, numshots > 1), coords = c("longitude", "latitude"),  crs=4326)
-     region_subset <- data %>% filter(!is.na(text), text == input$text)
-     ggplot(region_subset, aes(x = created_at, y = favourites_count)) +
-       geom_col() +
-       geom_point() +
-       theme_wsj() + 
-       scale_color_wsj() +
+     region_subset <- st_as_sf(data %>% filter(year == input$year, !is.na(numshots)), coords = c("longitude", "latitude"),  crs=4326)
+     ggplot(data = DC) +
+       geom_sf() +
+       geom_sf(data = region_subset) +
+       theme_map() +
+       transition_states(hour) + 
        labs(
-         title = "When the IT Cells Strike Twitter* —
-         Favourites Count for Selected Time",
-         subtitle = "The Indian elections see bot tweeting as a tool to 
-         make messages popular: when in the 
-         day were these bots deadliest?",
-         source = "Data scraped from Twitter; 
-         *represents a particular sample, 
-         details @https://github.com/b-hemanth/lok_sabha_campaigns",
-         x = "Hour of the Day",
-         y = "Favourites"
-       )
+         title = "Location of DC Shootings During the Day",
+         subtitle = "Hour: {closest_state}",
+         caption = "Source: Shotspotter Data"
+         )
+     
    })
 }
 
