@@ -1,6 +1,6 @@
 # shotspotter. Gunshot Locations in Washington DC: Interactive, Geospatial, Animated Analysis 
-## Authors: Hemanth Bharatha Chakravarthy and Ilkin Bayramli.
-This project aims to investigate the gunshot data provided by the Justice Tech Lab. 
+## Authors: Hemanth Bharatha Chakravarthy and Ilkin Bayramli
+_This project aims to investigate the gunshot data provided by the Justice Tech Lab on Washington DC._ 
 
 ## Note on the Data
 The Justice Tech Lab's ShotSpotter uses acoustic sensors to detect gunfire sounds and record time as well as location of all gunfire incidents in a covered area.

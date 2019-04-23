@@ -100,7 +100,11 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                                     
                                     # THis guides the user a little better
                                     
-                                    helpText("Please select a year below to iterate over. The graph on the right will show the monthly gunshot locations. Because of the nature of R animations, the graphic may take up to 30 seconds to load. Appreciate your patience!"),
+                                    helpText("Please select a year below to iterate over. 
+                                             The graph on the right will show the monthly gunshot
+                                             locations. Because of the nature of R animations, 
+                                             the graphic may take up to 30 seconds to load. 
+                                             Appreciate your patience!"),
                                     
                                     # I thought it would be more reasonable to
                                     # add a drop-down menu rather than a slider
@@ -133,7 +137,7 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                                     helpText("Select a date for which we will display gunshots in DC by hour of day.
                                              All dates are in yyyy-mm-dd formats.
                                              Valid dates go from 27 January, 2016, to December, 2017.
-                                             NOTE: The animation can take upto a minute to load, kindly wait."),
+                                             NOTE: The animation can take upto a minute to load, appreciate your patience!"),
                                     dateInput("date",
                                               "Date (yyyy-mm-dd from 2006-2017): ", 
                                               value = "2006-01-27",
@@ -156,7 +160,7 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
 # Define server logic 
 server <- function(input, output) {
   
-  output$about <- renderText("<b>Authors: Hemanth Bharatha Chakravarthy and Ilkin Bayramli.</b><br><br>This project aims to investigate the gunshot data provided by the Justice Tech Lab. The Justice Tech Lab's ShotSpotter uses acoustic sensors to detect gunfire sounds and record time as well as location of all gunfire incidents in a covered area. We decided to use this data to investigate gunshot locations across months of different years and through the hours of any given day. We built this geospatial analysis using Shiny to be interactive and animated to better inform you, the user.<br><br>To find more information about the Shotspotter data see:<br> Carr, Jillian B., and Jennifer L. Doleac. 2018. Keep the Kids Inside? Juvenile Curfews and Urban Gun Violence. Review of Economics and Statistics, 100(4): 609-618. <br> Carr, Jillian B., and Jennifer L. Doleac. 2016. The geography, incidence, and underreporting of gun violence: new evidence using ShotSpotter data. Brookings Research Paper.<br><br>You can access our code here, on GitHub: <a href='https://github.com/b-hemanth/shotspotter'>https://github.com/b-hemanth/shotspotter</a>. The dataset we use covers Washington DC for the years 2006-2017. You can find the full ShotSpotter dataset here: <a href=''http://justicetechlab.org/shotspotter-data/'>http://justicetechlab.org/shotspotter-data/</a>.")
+  output$about <- renderText("<b>Authors: Hemanth Bharatha Chakravarthy and Ilkin Bayramli.</b><br><br>This project aims to investigate the gunshot data provided by the Justice Tech Lab. The Justice Tech Lab's ShotSpotter uses acoustic sensors to detect gunfire sounds and record time as well as location of all gunfire incidents in a covered area. We decided to use this data to investigate gunshot locations across months of different years and through the hours of any given day. We built this geospatial analysis using Shiny to be interactive and animated to better inform you, the user.<br><br>To find more information about the Shotspotter data, see:<br> Carr, Jillian B., and Jennifer L. Doleac. 2018. Keep the Kids Inside? Juvenile Curfews and Urban Gun Violence. Review of Economics and Statistics, 100(4): 609-618. <br> Carr, Jillian B., and Jennifer L. Doleac. 2016. The geography, incidence, and underreporting of gun violence: new evidence using ShotSpotter data. Brookings Research Paper.<br><br>You can access our code here, on GitHub: <a href='https://github.com/b-hemanth/shotspotter'>https://github.com/b-hemanth/shotspotter</a>. The dataset we use covers Washington DC for the years 2006-2017. You can find the full ShotSpotter dataset here: <a href=''http://justicetechlab.org/shotspotter-data/'>http://justicetechlab.org/shotspotter-data/</a>.")
   
    # Because we are in fact plotting .gif files, renderPlot won't work. We
    # actually need to treat the output as an image.
