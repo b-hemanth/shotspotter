@@ -86,6 +86,7 @@ shape_wash_data <- st_as_sf(data, coords = c("longitude", "latitude"),  crs=4326
 # A working app example: https://jleach.shinyapps.io/oyster/
 
 ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
+                         theme = shinytheme("darkly"),
                          tabPanel("Across the Years",
                                   sidebarPanel(
                                     sliderInput("year",
@@ -141,14 +142,14 @@ server <- function(input, output, session) {
    
    output$hoursPlot <- renderImage({
      
-     if (nrow(filter(date == input$date, numshots != 0)) == 0) {
-       # Return a list containing the filename
-       list(src = "no_shots.gif",
-            contentType = 'image/gif',
-            alt = "There were no shots fired on the chosen day"
-       )
-       
-     } else {
+     # if (nrow(filter(date == input$date, numshots != 0)) == 0) {
+     #   # Return a list containing the filename
+     #   list(src = "no_shots.gif",
+     #        contentType = 'image/gif',
+     #        alt = "There were no shots fired on the chosen day"
+     #   )
+     #   
+     # } else {
      region_subset <- st_as_sf(data %>% filter(date == input$date), coords = c("longitude", "latitude"),  crs=4326)
      
      outfile <- tempfile(fileext='.gif')
@@ -156,11 +157,19 @@ server <- function(input, output, session) {
      p = ggplot(data = DC) +
        geom_sf() +
        geom_sf(data = sample) +
-       theme_map() +
+       
+       # HEALEY Recommends black and white themes on maps. 
+       # BW is also the most practical theme: with an  interactive AND animated
+       # interface, large database, and slow gganimate packaged, using this
+       # theme is best. This is particularly so because gganimate makes each
+       # frame and then runs them one after the other.
+       
+       theme_bw() +
+       scale_color_brewer() +
        transition_states(hour) + 
        labs(
-         title = "Location of DC Shootings Through the Day",
-         subtitle = "Shots at {closest_state}00 HRS",
+         title = "Location of Washington DC Shootings Through the Day",
+         subtitle = "Shot(s) at {closest_state}00 HRS",
          caption = "Source: Shotspotter Data"
          )
      
@@ -173,7 +182,7 @@ server <- function(input, output, session) {
           # height = 300,
           # alt = "This is alternate text"
      )
-     }
+     # }
 })
 }
 
