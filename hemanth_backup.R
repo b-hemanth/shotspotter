@@ -29,6 +29,8 @@ library(gganimate)
 library(shinycssloaders)
 
 library(shinythemes)
+library(lubridate)
+library(shinythemes)
 
 # 1: PREPROCESSING
 
@@ -50,7 +52,10 @@ data <- read_csv("wash_data.csv",
                    type = col_logical()
                  ),
                  col_names = TRUE
-)
+) %>%
+  mutate(month_1 = as.character(month(ymd(010101) + months(month-1),
+                                      label = TRUE,
+                                      abbr = FALSE)))
 
 # Adding a date column 
 # For plot #2, we allow the user to pick any date in the
@@ -62,6 +67,8 @@ data$date <- as.Date(paste(data$year, data$month, data$day, sep="-"), "%Y-%m-%d"
 # the `tigris` package's inbuilt states() function for the US that allowed us to
 # access shapefiles for American states. Filtering for DC, we found the
 # shapefile we wanted.
+
+DC <- DC[DC$NAME == "District of Columbia", ]
 
 DC <-  states(cb = TRUE)
 DC <- DC[DC$NAME == "District of Columbia", ]
@@ -81,25 +88,39 @@ shape_wash_data <- st_as_sf(data, coords = c("longitude", "latitude"),  crs=4326
 # sidebars on each page using the navbarPage() layout (the pages are created
 # with the tabPanel() function). 
 
-# An example of this:
-# https://github.com/Jim89/oyster/blob/master/R/shiny/ui.R 
-# A working app example: https://jleach.shinyapps.io/oyster/
 
 ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                          theme = shinytheme("darkly"),
                          tabPanel("Across the Years",
                                   sidebarPanel(
-                                    sliderInput("year",
+                                    
+                                    # THis guides the user a little better
+                                    
+                                    helpText("Please select a year below to iterate over. The graph on the right will show the monthly gunshot locations. Because of the nature of R animations, the graphic may take up to 30 seconds to load. Appreciate your patience!"),
+                                    
+                                    # I thought it would be more reasonable to
+                                    # add a drop-down menu rather than a slider
+                                    
+                                    selectInput("year_1",
                                                 "Year:",
-                                                min = 2006,
-                                                max = 2017,
-                                                value = 2006,
-                                                sep = "")
+                                                c("2016" = 2016,
+                                                  "2015" = 2015,
+                                                  "2014" = 2014,
+                                                  "2013" = 2013,
+                                                  "2012" = 2012,
+                                                  "2011" = 2011,
+                                                  "2010" = 2010,
+                                                  "2009" = 2009,
+                                                  "2008" = 2008,
+                                                  "2007" = 2007))
                                   ),
                                   mainPanel(
                                     tabsetPanel(
-                                      tabPanel("Across the Years", 
-                                               withSpinner(plotOutput("mapplot"), type = 4)
+                                      tabPanel("Gun Shot Locations of a Random Sample by Month", 
+                                               
+                                               # This adds a spinner when the data loads
+                                               
+                                               withSpinner(imageOutput("mapplot"), type = 4)
                                       ))
                                   )
                          ),
@@ -117,28 +138,69 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                                               format = "yyyy-mm-dd")
                                     ),
                                   mainPanel(
-                                    tabPanel("In a Day",
-                                             withSpinner(imageOutput("hoursPlot"), type = 4))
-                                  )
+                                    tabsetPanel(
+                                      tabPanel("Location of Washington DC Shootings Through the Day",
+                                               
+                                               # This adds a spinner when the data loads
+                                               
+                                               withSpinner(imageOutput("hoursPlot"), type = 4))
+                                    ))
                          )
 ))
 
-# 3: FUNCTIONS FOR ANIMATIONS
 
 # Define server logic 
 server <- function(input, output) {
   
-  output$mapplot <- renderPlot({
-    shape_wash_data <- st_as_sf(data %>% filter(year == input$year, numshots > 1), coords = c("longitude", "latitude"),  crs=4326)
+  # Because we are in fact plotting .gif files, renderPlot won't work. We
+  # actually need to treat the output as an image.
+  
+  output$mapplot <- renderImage({
     
-    ggplot(data = DC) +
+    # This filter the data according to the input of our user NOTE: I decided to
+    # draw a sample of 50 because it took ages for the gganimate to load. Given
+    # that we are REQUIRED by the prompt to make an interactive gganimate plot,
+    # this was the only solution I could come up with. Another thing is, the
+    # graphs still take a lot of time to load. This is just the way gganimate()
+    # works.
+    
+    shape_wash_data <- st_as_sf(data %>% filter(year == input$year_1) %>% sample_n(50), 
+                                coords = c("longitude", "latitude"), 
+                                crs = 4326)
+    
+    # This is the way renderImage works
+    
+    outfile <- tempfile(fileext = '.gif')
+    
+    # This actually plots the map we need
+    
+    p <- ggplot(data = DC, aes()) +
       geom_sf() +
       geom_sf(data = shape_wash_data) +
-      theme_map() + 
-      transition_states(year) + 
-      labs(title = "Location of DC Shootings by Year",
-           subtitle = "Year: {closest_state}",
+      
+      # We iterate over the data montly to see how the crime locations change
+      # every month within a certain year
+      
+      transition_states(month_1) +
+      
+      # Healy recommends using BW theme
+      
+      theme_bw() +
+      
+      # This is to make the user aware of the which month the data represents
+      
+      labs(title = "Month: {closest_state}",
            caption = "Source: Shotspotter Data")
+    
+    # This saves the file for embedding
+    
+    anim_save("outfile.gif", animate(p))
+    
+    # I also had to do this due to the syntax
+    
+    list(src = "outfile.gif",
+         contentType = 'image/gif'
+    )
   })
   
   output$hoursPlot <- renderImage({
@@ -155,14 +217,12 @@ server <- function(input, output) {
       # white theme is also the most practical theme: with an  interactive AND
       # animated interface, large database, and slow gganimate packaged, using
       # this theme is best. This is particularly so because gganimate makes
-      # each frame and then runs them one after the other. So, we chose to use
-      # the Tufte theme: this is both classy and black and white.
+      # each frame and then runs them one after the other. 
       
-      theme_tufte() +
+      theme_bw() +
       transition_states(hour) + 
       labs(
-        title = "Location of Washington DC Shootings Through the Day",
-        subtitle = "Shot(s) at {closest_state}00 HRS",
+        title = "Shot(s) at {closest_state}00 HRS",
         caption = "Source: Shotspotter Data"
       )
     
