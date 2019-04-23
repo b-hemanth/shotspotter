@@ -104,8 +104,12 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                          ),
                          tabPanel("In a Day",
                                   sidebarPanel(
+                                    helpText("Select a date for which we will display gunshots in DC by hour of day.
+                                             All dates are in yyyy-mm-dd formats.
+                                             Valid dates go from 27 January, 2016, to December, 2017."),
                                     dateInput("date",
                                               "Date (yyyy-mm-dd from 2006-2017): ", 
+                                              value = "2006-01-27",
                                               min = "2006-01-27", 
                                               max = "2017-01-01",
                                               format = "yyyy-mm-dd")
@@ -120,7 +124,7 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
 # 3: FUNCTIONS FOR ANIMATIONS
 
 # Define server logic 
-server <- function(input, output) {
+server <- function(input, output, session) {
    
    output$mapplot <- renderPlot({
       shape_wash_data <- st_as_sf(data %>% filter(year == input$year, numshots > 1), coords = c("longitude", "latitude"),  crs=4326)
@@ -136,9 +140,19 @@ server <- function(input, output) {
    })
    
    output$hoursPlot <- renderImage({
+     
+     if (nrow(filter(date == input$date, numshots != 0)) == 0) {
+       # Return a list containing the filename
+       list(src = "no_shots.gif",
+            contentType = 'image/gif',
+            alt = "There were no shots fired on the chosen day"
+       )
+       
+     } else {
+     region_subset <- st_as_sf(data %>% filter(date == input$date), coords = c("longitude", "latitude"),  crs=4326)
+     
      outfile <- tempfile(fileext='.gif')
-     region_subset <- st_as_sf(data %>% filter(data == input$date, !is.na(numshots)), coords = c("longitude", "latitude"),  crs=4326)
-     sample <- region_subset[sample(nrow(region_subset), 50), ]
+     
      p = ggplot(data = DC) +
        geom_sf() +
        geom_sf(data = sample) +
@@ -159,6 +173,7 @@ server <- function(input, output) {
           # height = 300,
           # alt = "This is alternate text"
      )
+     }
 })
 }
 
