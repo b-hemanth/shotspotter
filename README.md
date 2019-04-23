@@ -1,4 +1,4 @@
-# shotspotter. Gunshot Locations in Washington DC: Interactive, Geospatial, Animated Analysis 
+# Gunshots in Washington DC: Interactive, Geospatial, Animated Analysis 
 ## Authors: Hemanth Bharatha Chakravarthy and Ilkin Bayramli
 _This project aims to investigate the gunshot data provided by the Justice Tech Lab on Washington DC._ 
 
