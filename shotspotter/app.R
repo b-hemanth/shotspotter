@@ -7,15 +7,32 @@ library(mapview)
 library(sf)
 library(tmap)
 library(tmaptools)
+
+# After not finding valid shapefiles in the right format for DC, we chose to use
+# the `tigris` package's inbuilt states() function for the US that allowed us to
+# access shapefiles for American states. Filtering for DC, we found the
+# shapefile we wanted.
+
 library(tigris)
+
 library(ggplot2)
 library(viridis)
 library(ggthemes)
 library(gganimate)
+
+# This package allows our tabpanels to call for output enclosed by the
+# withSpinner() function. Eg: withSpinner(plotOutput("mapplot"), type = 4). This
+# function gives a loading symbol when the Shiny App is rendered, ensuring that
+# the otherwise present whitespace when heavy renders like this one with
+# animations isn't mistaken for an error or Shiny failure.
+
 library(shinycssloaders)
+
 library(shinythemes)
 library(lubridate)
 library(shinythemes)
+
+# 1: PREPROCESSING
 
 # We downloaded the data and saved it in the github repo. By the nature of the
 # dataset, we don't expect it to change anythime soon.
@@ -36,32 +53,56 @@ data <- read_csv("wash_data.csv",
                  ),
                  col_names = TRUE
                  ) %>%
-  mutate(month = as.character(month(ymd(010101) + months(month-1),
+  mutate(month_1 = as.character(month(ymd(010101) + months(month-1),
                                     label = TRUE,
                                     abbr = FALSE)))
 
-DC <-  states(cb = TRUE)
+# Adding a date column 
+# For plot #2, we allow the user to pick any date in the
+# window in which the data exists and view all the gunshots in that day by hour.
 
+data$date <- as.Date(paste(data$year, data$month, data$day, sep="-"), "%Y-%m-%d")
+
+# After not finding valid shapefiles in the right format for DC, we chose to use
+# the `tigris` package's inbuilt states() function for the US that allowed us to
+# access shapefiles for American states. Filtering for DC, we found the
+# shapefile we wanted.
 
 DC <- DC[DC$NAME == "District of Columbia", ]
 
+DC <-  states(cb = TRUE)
+DC <- DC[DC$NAME == "District of Columbia", ]
+
 DC <- st_as_sf(DC)
-shape_wash_data <- st_as_sf(data %>% filter(year == 2016) %>% sample_n(10), coords = c("longitude", "latitude"),  crs=4326)
-
-ggplot(data = DC) +
-  geom_sf() +
-  geom_sf(data = shape_wash_data) +
-  theme_map() +
-  labs(title = "Location of DC Shootings by Year",
-       caption = "Source: Shotspotter Data")
+shape_wash_data <- st_as_sf(data, coords = c("longitude", "latitude"),  crs=4326)
 
 
-ui <- shinyUI(navbarPage("Washington DC Gun Shot Location Data",
+# 2: USER INTERFACE
+
+# Define UI 
+# Based on:
+# https://community.rstudio.com/t/different-inputs-sidebars-for-each-tab/1937/2
+# We need different sidebar panels for different tabs, so, the traditional one
+# panel, multiple tabs method doeesn't work. Instead, we resolve this UI problem
+# by making a multi-page Shiny App. Here, the app is built with separate
+# sidebars on each page using the navbarPage() layout (the pages are created
+# with the tabPanel() function). 
+
+
+ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                          theme = shinytheme("darkly"),
                          tabPanel("Across the Years",
                                   sidebarPanel(
+                                    
+                                    # THis guides the user a little better
+                                    
+                                    helpText("Please select a year below to iterate over. The graph on the right will show the monthly gunshot locations."),
+                                    
+                                    # I thought it would be more reasonable to
+                                    # add a drop-down menu rather than a slider
+                                    
                                     selectInput("year_1",
-                                                "Select the year to iterate over:",
+                                                "Year:",
                                                 c("2016" = 2016,
                                                   "2015" = 2015,
                                                   "2014" = 2014,
@@ -76,18 +117,28 @@ ui <- shinyUI(navbarPage("Washington DC Gun Shot Location Data",
                                   mainPanel(
                                     tabsetPanel(
                                       tabPanel("Gun Shot Locations of a Random Sample by Month", 
+                                               
+                                               # This adds a spinner when the data loads
+                                               
                                                withSpinner(imageOutput("mapplot"), type = 4)
                                                ))
                                   )
                          ),
                          tabPanel("In a Day",
                                   sidebarPanel(
-                                    radioButtons("year",
-                                                 "Year: ", unique(data$year))
+                                    helpText("Select a date for which we will display gunshots in DC by hour of day.
+                                             All dates are in yyyy-mm-dd formats.
+                                             Valid dates go from 27 January, 2016, to December, 2017."),
+                                    dateInput("date",
+                                              "Date (yyyy-mm-dd from 2006-2017): ", 
+                                              value = "2006-01-27",
+                                              min = "2006-01-27", 
+                                              max = "2017-01-01",
+                                              format = "yyyy-mm-dd")
                                   ),
                                   mainPanel(
                                     tabPanel("In a Day",
-                                                     plotOutput("hoursPlot"))
+                                             withSpinner(imageOutput("hoursPlot"), type = 4))
                                     )
                          )
 ))
@@ -119,7 +170,7 @@ server <- function(input, output) {
       outfile <- tempfile(fileext = '.gif')
       
       # This actually plots the map we need
-      
+
       p <- ggplot(data = DC, aes()) +
         geom_sf() +
         geom_sf(data = shape_wash_data) +
@@ -127,7 +178,7 @@ server <- function(input, output) {
         # We iterate over the data montly to see how the crime locations change
         # every month within a certain year
         
-        transition_states(month) +
+        transition_states(month_1) +
         
         # Healy recommends using BW theme
         
@@ -148,20 +199,50 @@ server <- function(input, output) {
       )
    })
    
-   output$hoursPlot <- renderPlot({
-     region_subset <- st_as_sf(data %>% filter(year == input$year, !is.na(numshots)), coords = c("longitude", "latitude"),  crs=4326)
-     ggplot(data = DC) +
+   output$hoursPlot <- renderImage({
+     
+     # if (nrow(filter(date == input$date, numshots != 0)) == 0) {
+     #   # Return a list containing the filename
+     #   list(src = "no_shots.gif",
+     #        contentType = 'image/gif',
+     #        alt = "There were no shots fired on the chosen day"
+     #   )
+     #   
+     # } else {
+     region_subset <- st_as_sf(data %>% filter(date == input$date), coords = c("longitude", "latitude"),  crs=4326)
+     
+     outfile <- tempfile(fileext='.gif')
+     
+     p = ggplot(data = DC) +
        geom_sf() +
-       geom_sf(data = region_subset) +
-       theme_map() +
+       geom_sf(data = sample) +
+       
+       # HEALEY Recommends black and white themes on maps. 
+       # BW is also the most practical theme: with an  interactive AND animated
+       # interface, large database, and slow gganimate packaged, using this
+       # theme is best. This is particularly so because gganimate makes each
+       # frame and then runs them one after the other.
+       
+       theme_bw() +
+       scale_color_brewer() +
        transition_states(hour) + 
        labs(
-         title = "Location of DC Shootings During the Day",
-         subtitle = "Hour: {closest_state}",
+         title = "Location of Washington DC Shootings Through the Day",
+         subtitle = "Shot(s) at {closest_state}00 HRS",
          caption = "Source: Shotspotter Data"
          )
      
-   })
+     anim_save("outfile.gif", animate(p))
+     
+     # Return a list containing the filename
+     list(src = "outfile.gif",
+          contentType = 'image/gif'
+          # width = 400,
+          # height = 300,
+          # alt = "This is alternate text"
+     )
+     # }
+})
 }
 
 # Run the application 
