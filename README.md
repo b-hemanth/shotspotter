@@ -6,7 +6,7 @@ This project aims to investigate the gunshot data provided by the Justice Tech L
 The Justice Tech Lab's ShotSpotter uses acoustic sensors to detect gunfire sounds and record time as well as location of all gunfire incidents in a covered area.
 
 
-The dataset we use covers Washington DC for the years 2006-2017. 
+The dataset we use covers Washington DC for the years 2006-2017. Check out the full ShotSpotter data here http://justicetechlab.org/shotspotter-data/.
 
 
 To find more information about the Shotspotter data see: 
