@@ -50,7 +50,7 @@ data <- read_csv("wash_data.csv",
                    type = col_logical()
                  ),
                  col_names = TRUE
-                 )
+)
 
 # Adding a date column 
 # For plot #2, we allow the user to pick any date in the
@@ -100,7 +100,7 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                                     tabsetPanel(
                                       tabPanel("Across the Years", 
                                                withSpinner(plotOutput("mapplot"), type = 4)
-                                               ))
+                                      ))
                                   )
                          ),
                          tabPanel("In a Day",
@@ -115,11 +115,11 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                                               min = "2006-01-27", 
                                               max = "2017-01-01",
                                               format = "yyyy-mm-dd")
-                                  ),
+                                    ),
                                   mainPanel(
                                     tabPanel("In a Day",
                                              withSpinner(imageOutput("hoursPlot"), type = 4))
-                                    )
+                                  )
                          )
 ))
 
@@ -127,55 +127,55 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
 
 # Define server logic 
 server <- function(input, output) {
-   
-   output$mapplot <- renderPlot({
-      shape_wash_data <- st_as_sf(data %>% filter(year == input$year, numshots > 1), coords = c("longitude", "latitude"),  crs=4326)
+  
+  output$mapplot <- renderPlot({
+    shape_wash_data <- st_as_sf(data %>% filter(year == input$year, numshots > 1), coords = c("longitude", "latitude"),  crs=4326)
+    
+    ggplot(data = DC) +
+      geom_sf() +
+      geom_sf(data = shape_wash_data) +
+      theme_map() + 
+      transition_states(year) + 
+      labs(title = "Location of DC Shootings by Year",
+           subtitle = "Year: {closest_state}",
+           caption = "Source: Shotspotter Data")
+  })
+  
+  output$hoursPlot <- renderImage({
+    
+    region_subset <- st_as_sf(data %>% filter(date == input$date), coords = c("longitude", "latitude"),  crs=4326)
+    
+    outfile <- tempfile(fileext='.gif')
+    
+    p = ggplot(data = DC) +
+      geom_sf() +
+      geom_sf(data = sample) +
       
-      ggplot(data = DC) +
-        geom_sf() +
-        geom_sf(data = shape_wash_data) +
-        theme_map() + 
-        transition_states(year) + 
-        labs(title = "Location of DC Shootings by Year",
-             subtitle = "Year: {closest_state}",
-             caption = "Source: Shotspotter Data")
-   })
-   
-   output$hoursPlot <- renderImage({
-     
-     region_subset <- st_as_sf(data %>% filter(date == input$date), coords = c("longitude", "latitude"),  crs=4326)
-     
-     outfile <- tempfile(fileext='.gif')
-     
-     p = ggplot(data = DC) +
-       geom_sf() +
-       geom_sf(data = sample) +
-       
-       # HEALEY Recommends black and white themes on maps. A simple black and
-       # white theme is also the most practical theme: with an  interactive AND
-       # animated interface, large database, and slow gganimate packaged, using
-       # this theme is best. This is particularly so because gganimate makes
-       # each frame and then runs them one after the other. So, we chose to use
-       # the Tufte theme: this is both classy and black and white.
-       
-       theme_tufte() +
-       transition_states(hour) + 
-       labs(
-         title = "Location of Washington DC Shootings Through the Day",
-         subtitle = "Shot(s) at {closest_state}00 HRS",
-         caption = "Source: Shotspotter Data"
-         )
-     
-     anim_save("outfile.gif", animate(p))
-     
-     # Return a list containing the filename
-     list(src = "outfile.gif",
-          contentType = 'image/gif'
-          # width = 400,
-          # height = 300,
-          # alt = "This is alternate text"
-     )
-})
+      # HEALEY Recommends black and white themes on maps. A simple black and
+      # white theme is also the most practical theme: with an  interactive AND
+      # animated interface, large database, and slow gganimate packaged, using
+      # this theme is best. This is particularly so because gganimate makes
+      # each frame and then runs them one after the other. So, we chose to use
+      # the Tufte theme: this is both classy and black and white.
+      
+      theme_tufte() +
+      transition_states(hour) + 
+      labs(
+        title = "Location of Washington DC Shootings Through the Day",
+        subtitle = "Shot(s) at {closest_state}00 HRS",
+        caption = "Source: Shotspotter Data"
+      )
+    
+    anim_save("outfile.gif", animate(p))
+    
+    # Return a list containing the filename
+    list(src = "outfile.gif",
+         contentType = 'image/gif'
+         # width = 400,
+         # height = 300,
+         # alt = "This is alternate text"
+    )
+  })
 }
 
 # Run the application 
