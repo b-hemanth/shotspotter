@@ -91,6 +91,11 @@ shape_wash_data <- st_as_sf(data, coords = c("longitude", "latitude"),  crs=4326
 
 ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                          theme = shinytheme("darkly"),
+                         
+                         tabPanel("About",
+                                  mainPanel(h1("Shotspotter Gun Shots Data for Washington, DC"),
+                                            textOutput("about"))),
+                         
                          tabPanel("Across the Years",
                                   sidebarPanel(
                                     
@@ -151,6 +156,11 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
 
 # Define server logic 
 server <- function(input, output) {
+  
+  
+  output$about <- renderText("This project aims to investigate the gunshot data provided by the Justice Tech Lab. Shotshpotter uses acoustic sensors to detect gunfire sounds and record time as well as location of all gunfire incidents in a covered area. We decided to use this data to investigate how the gunshot locations have changed daily as well as month over different years. The dataset we use covers Washington DC for the years 2006 - 2007. \n 
+                             To find more information about the Shotspotter data see: \n Carr, Jillian B., and Jennifer L. Doleac. 2018. “Keep the Kids Inside? Juvenile Curfews and Urban Gun Violence. Review of Economics and Statistics, 100(4): 609-618. \n
+                             # Carr, Jillian B., and Jennifer L. Doleac. 2016. The geography, incidence, and underreporting of gun violence: new evidence using ShotSpotter data. Brookings Research Paper.")
   
    # Because we are in fact plotting .gif files, renderPlot won't work. We
    # actually need to treat the output as an image.
