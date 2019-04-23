@@ -92,8 +92,8 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                          theme = shinytheme("darkly"),
                          
                          tabPanel("About",
-                                  mainPanel(h1("Shotspotter Gun Shots Data for Washington, DC"),
-                                            textOutput("about"))),
+                                  mainPanel(h1("Gun Shots in Washington, DC"),
+                                            htmlOutput("about"))),
                          
                          tabPanel("Across the Years",
                                   sidebarPanel(
@@ -156,21 +156,7 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
 # Define server logic 
 server <- function(input, output) {
   
-  
-  output$about <- renderText("This project aims to investigate the gunshot data provided by the Justice Tech Lab. 
-                             The Justice Tech Lab's ShotSpotter uses acoustic sensors to detect gunfire sounds and 
-                             record time as well as location of all gunfire incidents in a covered area. <br> We 
-                             decided to use this data to investigate gunshot locations across months of different 
-                             years and through the hours of any given day. We built this geospatial analysis using 
-                             Shiny to be interactive and animated to better inform you, the user. <br> The dataset we 
-                             use covers Washington DC for the years 2006-2017. <br>To find more information about the
-                             Shotspotter data see:<br> Carr, Jillian B., and Jennifer L. Doleac. 2018. Keep the Kids 
-                             Inside? Juvenile Curfews and Urban Gun Violence. Review of Economics and Statistics, 100(4): 609-618.
-                             <br> Carr, Jillian B., and Jennifer L. Doleac. 2016. The geography, incidence, and underreporting of 
-                             gun violence: new evidence using ShotSpotter data. Brookings Research Paper.<br><br>
-                             You can access our code here, on GitHub: https://github.com/b-hemanth/shotspotter<br><br>
-                             <b>Authors: Hemanth Bharatha Chakravarthy and Ilkin Bayramli.</b><br>
-                             Link to data: http://justicetechlab.org/shotspotter-data/")
+  output$about <- renderText("<b>Authors: Hemanth Bharatha Chakravarthy and Ilkin Bayramli.</b><br><br>This project aims to investigate the gunshot data provided by the Justice Tech Lab. The Justice Tech Lab's ShotSpotter uses acoustic sensors to detect gunfire sounds and record time as well as location of all gunfire incidents in a covered area. We decided to use this data to investigate gunshot locations across months of different years and through the hours of any given day. We built this geospatial analysis using Shiny to be interactive and animated to better inform you, the user.<br><br>To find more information about the Shotspotter data see:<br> Carr, Jillian B., and Jennifer L. Doleac. 2018. Keep the Kids Inside? Juvenile Curfews and Urban Gun Violence. Review of Economics and Statistics, 100(4): 609-618. <br> Carr, Jillian B., and Jennifer L. Doleac. 2016. The geography, incidence, and underreporting of gun violence: new evidence using ShotSpotter data. Brookings Research Paper.<br><br>You can access our code here, on GitHub: <a href='https://github.com/b-hemanth/shotspotter'>https://github.com/b-hemanth/shotspotter</a>. The dataset we use covers Washington DC for the years 2006-2017. You can find the full ShotSpotter dataset here: <a href=''http://justicetechlab.org/shotspotter-data/'>http://justicetechlab.org/shotspotter-data/</a>.")
   
    # Because we are in fact plotting .gif files, renderPlot won't work. We
    # actually need to treat the output as an image.
