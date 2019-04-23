@@ -96,7 +96,7 @@ ui <- shinyUI(navbarPage("Gun Shots in Washington DC",
                                     
                                     # THis guides the user a little better
                                     
-                                    helpText("Please select a year below to iterate over. The graph on the right will show the monthly gunshot locations."),
+                                    helpText("Please select a year below to iterate over. The graph on the right will show the monthly gunshot locations. Because of the nature of R animations, the graphic may take up to 30 seconds to load. Appreciate your patience!"),
                                     
                                     # I thought it would be more reasonable to
                                     # add a drop-down menu rather than a slider
@@ -189,7 +189,8 @@ server <- function(input, output) {
         
         # This is to make the user aware of the which month the data represents
         
-        labs(title = "Month: {closest_state}")
+        labs(title = "Month: {closest_state}",
+             caption = "Source: Shotspotter Data")
       
       # This saves the file for embedding
       
